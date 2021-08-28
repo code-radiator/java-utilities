@@ -1,0 +1,67 @@
+public static JsonObject connect(String url, int method, String[] paramNames, String[] paramValues) throws IOException, Exception {
+
+        StringBuilder out = new StringBuilder();
+        JsonObject resp = new JsonObject();
+
+        if (method == GET) {
+            HttpClient httpclient;
+            StringBuilder url2 = new StringBuilder();
+            url2.append(url).append("?");
+            for (int i = 0; i < paramNames.length; i++) {
+                url2.append(paramNames[i]).append("=").append(URLEncoder.encode(paramValues[i], "UTF-8"));
+                if (i != paramNames.length - 1) {
+                    url2.append("&");
+                }
+            }
+            try (CloseableHttpClient httpClient = HttpClients.createDefault();) {
+                HttpGet httpGet = new HttpGet(url);
+                CloseableHttpResponse httpResponse = httpClient.execute(httpGet);
+
+                int statusCode = httpResponse.getStatusLine().getStatusCode();
+                resp.addProperty("status_code", statusCode);
+
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                        httpResponse.getEntity().getContent()))) {
+                    String inputLine;
+                    while ((inputLine = reader.readLine()) != null) {
+                        out.append(inputLine);
+                    }
+                }
+                resp.add("response", new JsonParser().parse(out.toString()).getAsJsonObject());
+            }
+        } else if (method == POST) {
+            try (CloseableHttpClient httpClient = HttpClients.createDefault();) {
+                HttpPost post = new HttpPost(url);
+
+                List<NameValuePair> nameValuePairs = new ArrayList<>(paramNames.length);
+
+                for (int i = 0; i < paramNames.length; i++) {
+                    nameValuePairs.add(new BasicNameValuePair(paramNames[i],
+                            paramValues[i]));
+
+                }
+
+                post.setEntity(new UrlEncodedFormEntity(nameValuePairs, "UTF-8"));
+
+                HttpResponse response = httpClient.execute(post);
+
+                int statusCode = response.getStatusLine().getStatusCode();
+                resp.addProperty("status_code", statusCode);
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+
+                    try (InputStream instream = entity.getContent();) {
+                        try (Scanner sc = new Scanner(instream);) {
+
+                            while (sc.hasNext()) {
+                                out.append(sc.nextLine());
+                            }
+                        }
+
+                    }
+                    resp.add("response", new JsonParser().parse(out.toString()).getAsJsonObject());
+                }
+            }
+        }
+        return resp;
+    }

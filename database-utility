@@ -1,0 +1,56 @@
+private DBUtil() {
+
+    }
+    private static String vendor;
+    private static String host;
+    private static String port;
+    private static String databaseName;
+    private static String user;
+    private static String password;
+    private static boolean poolEnable;
+
+    private static final Properties PROP = new Properties();
+
+    static {
+        try {
+            PROP.load(DBUtil.class.getResourceAsStream("/db.properties"));
+
+            vendor = PROP.getProperty("db.vendor");
+            host = PROP.getProperty("db.ip");
+            port = PROP.getProperty("db.port");
+            databaseName = PROP.getProperty("db.name");
+            user = PROP.getProperty("db.user");
+            password = PROP.getProperty("db.password");
+
+            try {
+                Class.forName("org.postgresql.Driver");
+            } catch (ClassNotFoundException ex) {
+                ex.printStackTrace();
+                String stackTraceAsString = ExceptionUtils.getStackTrace(ex);
+                System.err.println(ex.getMessage()); //replace with LOGGER
+                System.out.println(stackTraceAsString);//replace with LOGGER
+
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            System.err.println(ex.getMessage());
+        }
+    }
+
+    public static Connection getConnection() {
+        Connection c;
+        try {
+            String urlFormat = "jdbc:%s://%s:%s/%s";
+            String url = String.format(urlFormat, vendor, host, port, databaseName);
+
+            Class.forName("org.postgresql.Driver");
+            c = DriverManager.getConnection(url, user, password);
+
+            return c;
+        } catch (ClassNotFoundException | SQLException ex) {
+            ex.printStackTrace();
+            System.err.println(ex.getMessage());
+            return null;
+        }
+    }

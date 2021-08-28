@@ -1,0 +1,66 @@
+  public static Job createJob(String filePath) {
+        Job job = new Job();
+        job.setName("JobName_" + new Date().getTime());
+        job.setDescription("System generated job description.");
+        job.setCreatedBy(1);//hardcoding as user management is not there in currnet scope
+        job.setCreatedOn(new Date());
+        job.setType(Job.TYPE);
+        job.setAllowSlicingFlag(true);
+
+        job.setSource_file(new File(filePath).getName());
+
+        JobDAO jobDAO = new JobDAO();
+        job = jobDAO.createJob(job);
+        if (job.getId() > 0) {
+            String toFilePath = moveSourceFile(job);
+            if (toFilePath.isEmpty()) {
+                job.setStatus(Status.STATUS_ERROR);
+                JobDAO.updateJobStatusDAO(job);//update error
+            } else {
+                hitImageSlicer(job);
+            }
+        }
+        return job;
+    }
+
+    /**
+     * moves the job file from temp to job folder
+     *
+     * @param jobID
+     * @return
+     */
+    private static String moveSourceFile(Job job) {
+        try {
+            String fromFilePath = Constants.tempFileDirectory + job.getCreatedBy() + Constants.fileSeparator + job.getSource_file();
+            String toFilePath = Constants.jobFolderPath + job.getId() + Constants.fileSeparator + job.getSource_file();
+
+            Path temp = Files.move(Paths.get(fromFilePath),
+                    Paths.get(toFilePath));
+            if (temp != null) {
+                return toFilePath;
+            } else {
+                return "";
+            }
+        } catch (IOException exception) {
+            exception.printStackTrace();
+            System.out.println("ERROR WHILE MOVING JOB RAW FILE FROM TEMP TO JOB FOLDER");
+
+            return "";
+        }
+    }
+
+    private static void hitImageSlicer(Job job) {
+        int jobID = job.getId();
+        String filePath = job.getSource_file();
+        boolean allowSlicing = job.isAllowSlicingFlag();
+        String imageSlicerURL = Constants.fileSlicerURL;
+        String[] paramNames = {"job_id", "filepath", "allow_slicing"};
+        String[] paramValues = {String.valueOf(jobID), filePath, String.valueOf(allowSlicing)};
+        try {
+            JsonObject response = HttpCustom.connect(imageSlicerURL, HttpCustom.POST, paramNames, paramValues);
+            TaskManager.createAllTasks(jobID,response);
+        } catch (Exception ex) {
+            Logger.getLogger(JobManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }

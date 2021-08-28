@@ -1,0 +1,21 @@
+public static void createAllTasks(int jobID,JsonObject obj){
+        JsonArray sliceList = obj.getAsJsonArray("slices");
+//        loop over sliceList and create task for every slice
+    }
+    public static boolean createTask(int jobID,JsonObject obj){
+        Task task = new Task();
+        task.setJobID(jobID);
+        task.setCreatedOn(new Date());
+        task.setJsonData(obj);
+        task.setStatus(Status.STATUS_CREATED);
+        
+        TaskDAO taskDAO = new TaskDAO();
+        task = taskDAO.createTask(task);
+        if(task.getId()>0){
+            return true;
+        }else{
+            //call task status update
+            TaskDAO.updateTaskStatusDAO(task);
+            return false;
+        }
+    }

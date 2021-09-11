@@ -1,3 +1,5 @@
+class DBUtil{
+
 private DBUtil() {
 
     }
@@ -7,7 +9,6 @@ private DBUtil() {
     private static String databaseName;
     private static String user;
     private static String password;
-    private static boolean poolEnable;
 
     private static final Properties PROP = new Properties();
 
@@ -27,14 +28,13 @@ private DBUtil() {
             } catch (ClassNotFoundException ex) {
                 ex.printStackTrace();
                 String stackTraceAsString = ExceptionUtils.getStackTrace(ex);
-                System.err.println(ex.getMessage()); //replace with LOGGER
-                System.out.println(stackTraceAsString);//replace with LOGGER
-
+                System.err.println(ex.getMessage()); //replace with LOGGER in production
+                System.out.println(stackTraceAsString);//replace with LOGGER in production
             }
 
         } catch (IOException ex) {
             ex.printStackTrace();
-            System.err.println(ex.getMessage());
+            System.err.println(ex.getMessage());//replace with LOGGER in production
         }
     }
 
@@ -54,3 +54,4 @@ private DBUtil() {
             return null;
         }
     }
+}

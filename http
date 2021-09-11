@@ -1,3 +1,8 @@
+class HTTPUtil{
+
+public static final GET = 1;
+public static final POST = 2;
+
 public static JsonObject connect(String url, int method, String[] paramNames, String[] paramValues) throws IOException, Exception {
 
         StringBuilder out = new StringBuilder();
